@@ -1,6 +1,8 @@
 import requests
 import os
 import urllib
+import json
+import datetime as dt
 
 
 from typing import List
@@ -13,9 +15,7 @@ RESORT_AVAIL_URL = (
     "https://account.ikonpass.com/api/v2/reservation-availability/{resort_id}"
 )
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-)
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 
 
 class IkonPoller(WebsitePoller):
@@ -63,10 +63,25 @@ class IkonPoller(WebsitePoller):
         if not self.logged_in:
             self._login()
 
+        results = []
         for resort_name, resort_id in RESORTS.items():
             req_url = RESORT_AVAIL_URL.format(resort_id=resort_id)
             res = self.s.get(req_url)
             res.raise_for_status()
-            data = res.json()
-            print(data)
-        return None
+            data = res.json()["data"]
+            base_pass_data = [d for d in data if d["id"] == "8973859"]
+            if len(base_pass_data) != 1:
+                continue
+            base_pass_data = base_pass_data[0]
+            first_date = dt.datetime.now().date()
+            all_dates = [first_date + dt.timedelta(days=n) for n in range(2 * 30)]
+            unavail = (
+                base_pass_data["unavailable_dates"] + base_pass_data["closed_dates"]
+            )
+            unavail = [
+                dt.datetime.strptime(dt_str, "%Y-%m-%d").date() for dt_str in unavail
+            ]
+            avail_dates = [dt for dt in all_dates if dt not in unavail]
+            results.append(Resort(name=resort_name, available_dates=avail_dates))
+
+        return results

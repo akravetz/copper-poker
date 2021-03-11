@@ -2,6 +2,7 @@ import datetime as dt
 from twilio.rest import Client
 from polls import CopperPoller, IkonPoller
 import os
+import json
 import time
 
 # your account sid from twilio.com/console
@@ -19,7 +20,6 @@ def main():
         results = []
         for poller in pollers:
             res = poller.poll()
-            print(res)
             results.append(res)
         time.sleep(SLEEP_SECS)
 

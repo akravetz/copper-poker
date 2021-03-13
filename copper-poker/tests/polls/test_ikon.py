@@ -7,7 +7,7 @@ def test_ikon(mocker):
     mock_data = {
         "data": [
             {
-                "id": "8973859",
+                "id": 8973859,
                 "closed_dates": ["2021-01-01"],
                 "unavailable_dates": ["2021-06-01"],
             }

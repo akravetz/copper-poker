@@ -39,8 +39,8 @@ class ParkwhizPoller(WebsitePoller):
         avail_dates = []
         for itm in js:
             park_dt = dt.datetime.strptime(itm["start_time"], "%Y-%m-%dT%H:%M:%S.%f%z")
-            if park_dt.hour > 8:
-                # don't care about parking slots that start after 8am
+            if park_dt.hour > 10:
+                # don't care about parking slots that start after 10am
                 continue
             park_slots = int(itm["availability"]["available"])
             if park_slots > 0:

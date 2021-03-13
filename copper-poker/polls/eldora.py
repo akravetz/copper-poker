@@ -5,7 +5,7 @@ VENUE_ID = "478490"
 
 
 class EldoraPoller(ParkwhizPoller):
-    def __init__(self, auth_token):
-        if auth_token is None:
-            auth_token = os.environ["ELDORA_AUTH_TOKEN"]
-        super().__init__("Eldora", VENUE_ID, auth_token)
+    def __init__(self, bearer_token: str = None):
+        if bearer_token is None:
+            bearer_token = os.environ["ELDORA_AUTH_TOKEN"]
+        super().__init__("Eldora", VENUE_ID, bearer_token)

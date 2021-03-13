@@ -21,17 +21,16 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36
 class IkonPoller(WebsitePoller):
     def __init__(self, username: str = None, password: str = None):
         self.logged_in = False
-        self.s = None
         if username is None and password is None:
             username = os.environ["IKON_USERNAME"]
             password = os.environ["IKON_PASSWORD"]
         self.username = username
         self.password = password
 
-    def _login(self):
+    def _login(self, session):
         if self.logged_in:
             return
-        self.s.headers.update({"User-Agent": USER_AGENT})
+        session.headers.update({"User-Agent": USER_AGENT})
         payload = {
             "email": self.username,
             "password": self.password,
@@ -42,36 +41,34 @@ class IkonPoller(WebsitePoller):
         }
         login_url = "https://account.ikonpass.com/session"
         # r = requests.put(login_url, headers=headers, json=payload)
-        r = self.s.get("https://account.ikonpass.com/login", headers=headers)
+        r = session.get("https://account.ikonpass.com/login", headers=headers)
         r.raise_for_status()
-        r = self.s.get("https://account.ikonpass.com/ping", headers=headers)
+        r = session.get("https://account.ikonpass.com/ping", headers=headers)
         r.raise_for_status()
         # print(r.request.headers)
-        token = urllib.parse.unquote(self.s.cookies["PROD-XSRF-TOKEN"])
+        token = urllib.parse.unquote(session.cookies["PROD-XSRF-TOKEN"])
         headers = {"X-CSRF-Token": token}
 
-        r = self.s.put(login_url, headers=headers, json=payload)
+        r = session.put(login_url, headers=headers, json=payload)
         if r.status_code != 204:
             raise Exception(r)
         self.logged_in = True
 
     def poll(self, session: requests.Session = None) -> List[Resort]:
         if session is None:
-            self.s = requests.Session()
-        else:
-            self.s = session
+            session = requests.Session()
         if not self.logged_in:
-            self._login()
+            self._login(session)
 
         results = []
         for resort_name, resort_id in RESORTS.items():
             req_url = RESORT_AVAIL_URL.format(resort_id=resort_id)
-            res = self.s.get(req_url)
+            res = session.get(req_url)
             res.raise_for_status()
             data = res.json()["data"]
-            base_pass_data = [d for d in data if d["id"] == "8973859"]
+            base_pass_data = [d for d in data if d["id"] == 8973859]
             if len(base_pass_data) != 1:
-                continue
+                raise Exception("Unable to identify ikon base pass availability")
             base_pass_data = base_pass_data[0]
             first_date = dt.datetime.now().date()
             all_dates = [first_date + dt.timedelta(days=n) for n in range(2 * 30)]

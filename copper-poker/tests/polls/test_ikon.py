@@ -15,11 +15,22 @@ def test_ikon(mocker):
     }
     mock_sess = new_mock_session(
         mocker,
-        {
-            "default": "{}",
-            "https://account.ikonpass.com/api/v2/reservation-availability/38": json.dumps(mock_data),
-            "https://account.ikonpass.com/api/v2/reservation-availability/34": json.dumps(mock_data)
-        },
+        [
+            {"url": "default", "response": "{}"},
+            {
+                "url": "https://account.ikonpass.com/session",
+                "response": "{}",
+                "status_code": 204,
+            },
+            {
+                "url": "https://account.ikonpass.com/api/v2/reservation-availability/38",
+                "response": json.dumps(mock_data),
+            },
+            {
+                "url": "https://account.ikonpass.com/api/v2/reservation-availability/34",
+                "response": json.dumps(mock_data),
+            },
+        ],
     )
     mock_sess.cookies = {"PROD-XSRF-TOKEN": "MOCK_TOKEN"}
     inst = IkonPoller(username="FOO", password="BAR")

@@ -1,10 +1,13 @@
 import datetime as dt
-from twilio.rest import Client
-from polls import CopperPoller, IkonPoller, EldoraPoller
+from collections import defaultdict
 import requests
 import os
 import json
 import time
+import argparse
+from twilio.rest import Client
+from polls import CopperPoller, IkonPoller, EldoraPoller
+
 
 # your account sid from twilio.com/console
 SLEEP_SECS = 5
@@ -16,10 +19,33 @@ TWILIO_NUMBER = os.environ["TWILIO_NUMBER"]
 client = Client(TWILIO_ACCOUNT, TWILIO_TOKEN)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="text notifications for open reservations at ikon ski resorts"
+    )
+    parser.add_argument("--phone-number", "-pn", required=True)
+    parser.add_argument(
+        "--date",
+        "-dt",
+        action="append",
+        help="example: --date 'Araphoe Basin:2021-03-16'\n" "you can also pass `any` as the resort name to find availability at any resort",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     text_resorts = {}
-    dates_of_interest = {"Eldora": [dt.date(2021, 3, 14), dt.date(2021, 3, 24)]}
-    pollers = [EldoraPoller()]  # [IkonPoller(), CopperPoller()]
+
+    # parse dates that the user wants, these are passed in the form of a list of strings
+    # where strings are:
+    # Resort Name:YYYY-MM-DD
+    dates_of_interest = defaultdict(list)
+    for dt_arg in args.date:
+        resort, dt = dt_arg.split(":")
+        parsed_dt = dt.datetime.strptime(dt, "%Y-%m-%d").date()
+        dates_of_interest[resort].append(parsed_dt)
+    pollers = [IkonPoller(), CopperPoker(), EldoraPoker()]
     s = requests.Session()
     while True:
         results = []

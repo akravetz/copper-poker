@@ -14,5 +14,9 @@ class Resort:
 
 class WebsitePoller(ABC):
     @abstractmethod
+    def resort_names(self) -> List[str]:
+        pass
+
+    @abstractmethod
     def poll(self, session: requests.Session = None) -> List[Resort]:
         pass

@@ -1,12 +1,14 @@
 import requests
 import json
+from typing import List, Dict
 
 
-def new_mock_session(mocker, response_map):
+def new_mock_session(mocker, response_map: List[Dict]) -> requests.Session:
     """
-    returns a new mock requests.Session which returns pre-canned responses for given URLs.
-    response map should be a dictionary where they key is the URL and the value is the response to return for that URL
-    The responses can be either strings or bytes
+    returns a new mock requests.Session which returns pre-canned responses for
+    given URLs.  response map should be a list of dict where each dict has the
+    keys "url" and "response" (the value is the response to return for that URL)
+    The data can be either strings or bytes
     """
     s = requests.Session()
     mock_session = mocker.Mock(s)
@@ -16,7 +18,11 @@ def new_mock_session(mocker, response_map):
     # for each response buffer, return a new mock response each mock response
     # has the  and  properties mocked out to return our mock
     # data
-    for url, mock_data in response_map.items():
+    for itm in response_map:
+        url = itm["url"]
+        mock_data = itm["response"]
+        status_code = itm.get("status_code", 200)
+
         mock_response = mocker.Mock(requests.Response)
         mock_text = mocker.PropertyMock()
         mock_bytes = mocker.PropertyMock()
@@ -43,7 +49,7 @@ def new_mock_session(mocker, response_map):
         # object.  this is how one mocks properties of objects
         type(mock_response).text = mock_text
         type(mock_response).content = mock_bytes
-        mock_response.status_code = 204
+        mock_response.status_code = status_code
         mock_responses[url] = mock_response
 
     def mock_get(url, headers=None, json=None, data=None):
